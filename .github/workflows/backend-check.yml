@@ -27,6 +27,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json
+          import subprocess
           from pathlib import Path
           from urllib.request import Request, urlopen
 
@@ -42,7 +43,13 @@ jobs:
           with request("/recognize", image) as response:
               result = json.load(response)
               assert len(result["notes"]) > 10 and result["image"].startswith("data:image/jpeg")
-          with request("/character", image) as response:
+          crop = subprocess.check_output([
+              "docker", "exec", "ink-form", "python", "-c",
+              "from PIL import Image; import sys; "
+              "Image.open('/app/web/my_work/prints/2026-10-25_scroll.jpg')"
+              ".crop((865, 40, 960, 148)).save(sys.stdout.buffer, format='PNG')",
+          ])
+          with request("/character", crop) as response:
               result = json.load(response)
               assert result["standard"]["paths"], result["standard"]
           sample = json.dumps({"chains": [[[0, 0, 0, .04], [.16, 0, 0, .04]]]}).encode()
