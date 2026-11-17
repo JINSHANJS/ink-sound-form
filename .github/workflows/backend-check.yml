@@ -1,0 +1,56 @@
+name: Verify deployable backend
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - vendor/**
+      - requirements.txt
+      - Dockerfile
+      - fetch-weights.sh
+      - .github/workflows/backend-check.yml
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start the full server
+        run: |
+          docker build -t ink-form-test .
+          docker run -d --name ink-form -p 127.0.0.1:7860:7860 ink-form-test
+          curl -fsS --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:7860/health
+      - name: Check image recognition, standard paths and closed OBJ export
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          origin = "http://127.0.0.1:7860"
+          def request(path, data=None):
+              return urlopen(Request(origin + path, data=data, headers={"Origin": origin}), timeout=85)
+
+          with request("/health") as response:
+              assert json.load(response)["reference_model"]
+          with request("/") as response:
+              assert "ink_sound_form/" in response.url and b"archive.js" in response.read()
+          image = Path("web/my_work/prints/2026-10-25_scroll.jpg").read_bytes()
+          with request("/recognize", image) as response:
+              result = json.load(response)
+              assert len(result["notes"]) > 10 and result["image"].startswith("data:image/jpeg")
+          with request("/character", image) as response:
+              result = json.load(response)
+              assert result["standard"]["paths"], result["standard"]
+          sample = json.dumps({"chains": [[[0, 0, 0, .04], [.16, 0, 0, .04]]]}).encode()
+          with request("/solidify", sample) as response:
+              assert response.headers["X-Solid-Boundary"] == "0"
+              assert response.headers["X-Solid-Components"] == "1"
+              assert b"\nf " in response.read()
+          PY
+      - name: Display logs on failure
+        if: failure()
+        run: docker logs ink-form
