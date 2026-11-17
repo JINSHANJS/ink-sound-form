@@ -14,6 +14,10 @@ An interactive calligraphy artwork by JINSHANJS. Read a scroll, listen to the ge
 
 The interface includes scroll reading, pointer reading, stroke tracing, single-character standard and free paths, camera and image upload, WAV and printable OBJ export, and a named browser archive with full-page PNG and SVG downloads. The standard path is an AI reference. Check the suggested character and the route against the source.
 
+## Open the browser preview
+
+[Open Ink · Sound · Form](https://jinshanjs.github.io/ink-sound-form/). The same interface uses the bundled scroll and runs reading, sound, 3D visualisation, and browser archive functions. Custom image processing, character analysis, and printable OBJ export require the full server below.
+
 ## Run the full artwork
 
 The server serves the webpage and its image recognition, single-character inference, and mesh generation on the same address. A running Docker host is required for a browser-only deployment. GitHub stores the source and checkpoint.
