@@ -21,7 +21,7 @@ jobs:
       - name: Build and start the full server
         run: |
           docker build -t ink-form-test .
-          docker run -d --name ink-form -p 127.0.0.1:7860:7860 ink-form-test
+          docker run -d -e INK_FORM_TEST_LOGS=1 --name ink-form -p 127.0.0.1:7860:7860 ink-form-test
           curl -fsS --max-time 3 --retry 25 --retry-all-errors --retry-delay 1 http://127.0.0.1:7860/health
       - name: Check image recognition, standard paths and closed OBJ export
         run: |

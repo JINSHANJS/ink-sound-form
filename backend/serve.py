@@ -73,6 +73,8 @@ def reference_paths(rgb):
             return json.loads(dest.read_text())
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         print(f"Model inference failed: {type(error).__name__}", file=sys.stderr)
+        if os.environ.get("INK_FORM_TEST_LOGS") and isinstance(error, subprocess.CalledProcessError):
+            print(error.stderr.decode("utf-8", errors="replace")[-3000:], file=sys.stderr)
         return {"paths": [], "error": "The reference model could not trace this crop."}
     finally:
         MODEL.release()
