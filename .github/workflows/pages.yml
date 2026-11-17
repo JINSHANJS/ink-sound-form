@@ -24,7 +24,7 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          page = Path("web/my_work/object_3d/scroll/字-音-像.html")
+          page = Path("web/my_work/object_3d/ink_sound_form/字-音-像.html")
           html = page.read_text()
           page.write_text(html.replace("</body>", '<script src="pages-preview.js"></script>\n</body>'))
           PY

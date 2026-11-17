@@ -20,7 +20,7 @@ import extract
 import solidify
 
 ROOT = Path(__file__).resolve().parents[1]
-PAGE = "/my_work/object_3d/scroll/" + quote("字-音-像.html")
+PAGE = "/my_work/object_3d/ink_sound_form/" + quote("字-音-像.html")
 PORT = int(os.environ.get("PORT", 7860))
 CHECKPOINT = Path(os.environ.get("INK_FORM_CHECKPOINT_DIR", ROOT / "weights")).resolve()
 os.environ["INK_FORM_CHECKPOINT_DIR"] = str(CHECKPOINT)
