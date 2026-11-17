@@ -1,0 +1,16 @@
+tensorflow-macos==2.13.0
+gizeh==0.1.11
+cairocffi==1.6.1
+opencv-python==4.9.0.80
+matplotlib==3.7.4
+h5py==3.10.0
+Pillow==10.2.0
+libclang==16.0.6
+tensorflow-io-gcs-filesystem==0.34.0
+fonttools==4.48.1
+contourpy==1.1.1
+cycler==0.12.1
+kiwisolver==1.4.5
+pyparsing==3.1.1
+python-dateutil==2.8.2
+importlib-resources==6.1.1

@@ -1,0 +1,21 @@
+#character-study {margin-top:20px;padding-top:16px;border-top:1px solid #3b3b39}
+#character-study button {margin:3px 0}
+#character-tools p {font:12px/1.6 Arial,sans-serif;color:#bdbbb4}
+#character-tools label {display:block;font:12px/1.5 Arial,sans-serif;margin:10px 0;color:#ccc}
+#character-tools input,#character-tools select {display:block;box-sizing:border-box;width:100%;padding:7px;background:#1b1b1b;color:#eee;border:1px solid #555}
+#character-tools .study-actions {display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#character-tools [hidden] {display:none}
+#character-tools #confirm-paths {width:100%;border-color:#a18b60}
+#character-tools #reading-result {color:#e4c88d}
+
+body.character-focus:not(.solid) #stage {width:min(100%,65vh);align-self:center}
+body.character-focus:not(.solid) #scorewrap {width:100%}
+#character-study {order:0}
+
+@media (max-width: 860px) {
+  body.character-focus .app main {order:-1; padding:16px}
+  body.character-focus:not(.solid) #stage {width:min(100%,60vh)}
+  body.character-focus #scorewrap {margin-top:12px}
+}
+
+body.character-focus #controls .group[aria-label="Read"] {display:none}
