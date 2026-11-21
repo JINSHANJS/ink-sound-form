@@ -21,3 +21,5 @@ Camera access still needs the user's browser permission and HTTPS or localhost. 
 ## Delivery
 
 Both public and private ink_sound_form folders include the complete runtime and the new interaction boundary hooks. The public README documents actual capabilities, first-load cost and optional server use. Publication and live-site verification follow the local functional tests.
+
+Final verification: public code commit c4a8726 passed Publish artwork (44879446054) and Verify full browser artwork (44879446059). The unchanged optional backend passed Verify deployable backend (44879252241). The live GitHub Pages URL was then opened in Chrome and passed upload, character opening, audio playback, completed 3D, actual OBJ download, and closed-mesh checks without contacting a processing server. Both repositories contain the runtime files.
