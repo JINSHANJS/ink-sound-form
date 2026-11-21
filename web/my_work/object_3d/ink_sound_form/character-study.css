@@ -17,5 +17,3 @@ body.character-focus:not(.solid) #scorewrap {width:100%}
   body.character-focus:not(.solid) #stage {width:min(100%,60vh)}
   body.character-focus #scorewrap {margin-top:12px}
 }
-
-body.character-focus #controls .group[aria-label="Read"] {display:none}

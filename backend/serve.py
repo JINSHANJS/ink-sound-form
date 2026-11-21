@@ -56,28 +56,12 @@ def character_candidates(rgb):
 
 
 def reference_paths(rgb):
-    if not MODEL_READY:
-        return {"paths": [], "error": "The reference model is unavailable."}
-    if not MODEL.acquire(blocking=False):
-        return {"paths": [], "error": "The reference model is busy. Try again shortly."}
-    try:
-        with TemporaryDirectory(prefix="ink-form-") as folder:
-            src = Path(folder) / "input.png"
-            dest = Path(folder) / "paths.json"
-            ink, _ = extract.ink_mask(rgb)
-            Image.fromarray(255 - ink.astype(np.uint8) * 255).resize((256, 256)).save(src)
-            subprocess.run(
-                [sys.executable, str(ROOT / "backend/predict.py"), str(src), str(dest)],
-                cwd=folder, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=75, check=True,
-            )
-            return json.loads(dest.read_text())
-    except (OSError, ValueError, subprocess.SubprocessError) as error:
-        print(f"Model inference failed: {type(error).__name__}", file=sys.stderr)
-        if os.environ.get("INK_FORM_TEST_LOGS") and isinstance(error, subprocess.CalledProcessError):
-            print(error.stderr.decode("utf-8", errors="replace")[-3000:], file=sys.stderr)
-        return {"paths": [], "error": "The reference model could not trace this crop."}
-    finally:
-        MODEL.release()
+    result = extract.analyze(rgb)
+    return {
+        "source": "Ink continuity", "verified": False,
+        "paths": [[[p[0] / result["width"], p[1] / result["height"]]
+                   for p in note["points"]] for note in result["notes"]],
+    }
 
 
 class Handler(SimpleHTTPRequestHandler):

@@ -294,6 +294,102 @@ def trace_paths(nbrs):
     return paths, nodes, nbrs
 
 
+def continuous_paths(paths, nbrs):
+    """Continue compatible ink branches through a crossing, without bridging gaps."""
+    junctions = {p for p, near in nbrs.items() if len(near) > 2}
+    clusters, membership = [], {}
+    for p in sorted(junctions):
+        if p in membership:
+            continue
+        group, stack = set(), [p]
+        while stack:
+            q = stack.pop()
+            if q in group:
+                continue
+            group.add(q)
+            stack.extend(n for n in nbrs[q] if n in junctions and n not in group)
+        index = len(clusters)
+        membership.update((q, index) for q in group)
+        clusters.append(group)
+
+    routes, arms = [], [[] for _ in clusters]
+    for path in paths:
+        if len(path) < 2:
+            continue
+        first, last = membership.get(path[0]), membership.get(path[-1])
+        if first is not None and first == last and all(p in clusters[first] for p in path):
+            continue
+        index = len(routes)
+        routes.append(path)
+        for side, group in ((0, first), (1, last)):
+            if group is not None:
+                points = path if side == 0 else path[::-1]
+                sample = points[min(7, len(points) - 1)]
+                vector = np.asarray(sample, float) - points[0]
+                norm = np.linalg.norm(vector)
+                if norm > 2:
+                    arms[group].append(((index, side), vector / norm))
+
+    links = {}
+    for group in arms:
+        candidates = []
+        for i, (a, va) in enumerate(group):
+            for b, vb in group[i + 1:]:
+                dot = float(np.dot(va, vb))
+                if dot < -0.82:
+                    candidates.append((dot, a, b))
+        for _, a, b in sorted(candidates):
+            if a not in links and b not in links:
+                links[a], links[b] = b, a
+
+    def crossing(a, b):
+        if a == b:
+            return []
+        group = clusters[membership[a]]
+        previous, stack = {a: None}, [a]
+        for p in stack:
+            if p == b:
+                break
+            for q in nbrs[p]:
+                if q in group and q not in previous:
+                    previous[q] = p
+                    stack.append(q)
+        if b not in previous:
+            return []
+        bridge, p = [], b
+        while p != a:
+            bridge.append(p)
+            p = previous[p]
+        return bridge[::-1]
+
+    result, used = [], set()
+    # Begin at an unmatched endpoint; remaining chains are closed loops.
+    starts = [(i, side) for i in range(len(routes)) for side in (0, 1) if (i, side) not in links]
+    starts += [(i, 0) for i in range(len(routes))]
+    for index, side in starts:
+        if index in used:
+            continue
+        chain = []
+        while index not in used:
+            used.add(index)
+            path = routes[index] if side == 0 else routes[index][::-1]
+            if chain:
+                chain.extend(crossing(chain[-1], path[0]))
+            chain.extend(path if not chain or chain[-1] != path[0] else path[1:])
+            next_arm = links.get((index, 1 - side))
+            if next_arm is None:
+                break
+            index, side = next_arm
+            if index in used:
+                if routes[index][0 if side == 0 else -1] == chain[0]:
+                    chain.extend(crossing(chain[-1], chain[0]))
+                break
+        if chain and chain[0] > chain[-1]:
+            chain.reverse()
+        result.append(chain)
+    return result
+
+
 def split_corners(path, turn=0.9):
     if len(path) < 16:
         return [path]
@@ -435,9 +531,10 @@ def analyze(rgb):
     skel = stroke_skeleton(ink)
     nbrs = neighbors(skel)
     paths, _, nbrs = trace_paths(nbrs)
+    paths = continuous_paths(paths, nbrs)
     pieces = []
     for path in paths:
-        if len(path) < 16:
+        if not keep_path(path, nbrs):
             continue
         pieces.append(measure(path, dist, lum, ink, ii, height, width))
     for piece in pieces:
@@ -465,11 +562,11 @@ def analyze(rgb):
                 "attack": round(0.09 - t_fast * 0.07, 3),
                 "words": " · ".join(
                     [
-                        word(t_len, "短", "中", "长"),
-                        word(t_thick, "细", "中", "粗"),
-                        word(t_light, "浓", "中", "淡"),
-                        word(t_fast, "慢", "中", "快"),
-                        word(t_pack, "疏", "中", "密"),
+                        word(t_len, "Short", "Medium length", "Long"),
+                        word(t_thick, "Thin", "Medium width", "Thick"),
+                        word(t_light, "Dark", "Medium tone", "Pale"),
+                        word(t_fast, "Slow", "Moderate", "Fast"),
+                        word(t_pack, "Sparse", "Medium density", "Dense"),
                     ]
                 ),
                 "points": piece["points"],
@@ -478,10 +575,11 @@ def analyze(rgb):
     return {
         "width": int(width),
         "height": int(height),
-        "order": "从右往左，列内从上往下",
-        "mapping": "尺子钉在第一段上。长为 C3，短为 C7，中间按钢琴半音，共四个八度。连笔为低八度和弦。",
+        "order": "Right to left; top to bottom within each column",
+        "mapping": "Fixed reference scale: long strokes C3, short strokes C7. Connected paths sound as chords one octave lower.",
         "scale": {"low": "C3", "high": "C7", "semitones": PIANO_SPAN},
         "notes": notes,
+        "analysis": {"method": "Ink continuity", "version": 2, "scope": "whole image", "orderVerified": False},
     }
 
 
@@ -503,10 +601,11 @@ def main():
     skel = stroke_skeleton(ink)
     nbrs = neighbors(skel)
     paths, _, nbrs = trace_paths(nbrs)
+    paths = continuous_paths(paths, nbrs)
     pieces = []
     for path in paths:
         # 交叉处已经拆开。太短的是毛刺，不单独成音。
-        if len(path) < 16:
+        if not keep_path(path, nbrs):
             continue
         pieces.append(measure(path, dist, lum, ink, ii, h, w))
 
@@ -548,11 +647,11 @@ def main():
                 "attack": round(0.09 - t_fast * 0.07, 3),
                 "words": " · ".join(
                     [
-                        word(t_len, "短", "中", "长"),
-                        word(t_thick, "细", "中", "粗"),
-                        word(t_light, "浓", "中", "淡"),
-                        word(t_fast, "慢", "中", "快"),
-                        word(t_pack, "疏", "中", "密"),
+                        word(t_len, "Short", "Medium length", "Long"),
+                        word(t_thick, "Thin", "Medium width", "Thick"),
+                        word(t_light, "Dark", "Medium tone", "Pale"),
+                        word(t_fast, "Slow", "Moderate", "Fast"),
+                        word(t_pack, "Sparse", "Medium density", "Dense"),
                     ]
                 ),
                 "points": p["points"],
@@ -563,10 +662,11 @@ def main():
         "source": "my_work/prints/2026-10-25_scroll.jpg",
         "width": int(w),
         "height": int(h),
-        "order": "从右往左，列内从上往下",
+        "order": "Right to left; top to bottom within each column",
         "mapping": "长为 C3，短为 C7，中间按钢琴半音，共四个八度。细的短，粗的长。浓的闷，淡的亮。飞白多则下一笔紧。连笔为低八度和弦。",
         "scale": {"low": "C3", "high": "C7", "semitones": PIANO_SPAN},
         "notes": notes,
+        "analysis": {"method": "Ink continuity", "version": 2, "scope": "whole image", "orderVerified": False},
     }
     text = json.dumps(score, ensure_ascii=False)
     OUT.write_text(text, encoding="utf-8")

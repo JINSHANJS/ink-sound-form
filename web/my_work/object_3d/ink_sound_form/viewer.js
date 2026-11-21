@@ -1207,7 +1207,7 @@ function exportObj() {
     });
   }).catch(function () {
     nowEl.textContent = "Mesh service unavailable";
-    whyEl.textContent = "Try again in a moment.";
+    whyEl.textContent = "Start the local recognition service and export again.";
   }).then(function () {
     exporting = false;
   });
@@ -2310,10 +2310,11 @@ document.addEventListener("keydown", function (event) {
 });
 
 let uploadRevision = 0;
-let displayedPhotoURL;
+let displayedPhotoURL = photo.src;
 const readingControls = [playBtn, pointerBtn, handBtn, haltBtn, solidBtn, musicBtn, againBtn, exportBtn, recordBtn];
 
 async function sendImage(blob) {
+  if (typeof characterStudy !== "undefined" && characterStudy.mode !== "off") leaveCharacter();
   const revision = ++uploadRevision;
   const url = URL.createObjectURL(blob);
   const incoming = new Image();
@@ -2335,8 +2336,6 @@ async function sendImage(blob) {
     stage.classList.remove("unrolling");
     stage.classList.add("rolled");
     photo.src = url;
-    if (displayedPhotoURL) URL.revokeObjectURL(displayedPhotoURL);
-    displayedPhotoURL = url;
     nowEl.textContent = "Recognising strokes";
     whyEl.textContent = "Reading the ink on your scroll.";
     const res = await fetch("/recognize", { method: "POST", body: blob });
@@ -2344,12 +2343,16 @@ async function sendImage(blob) {
     const result = await res.json();
     if (revision !== uploadRevision) return;
     if (!result.notes?.length) throw new Error("No strokes");
+    if (displayedPhotoURL.startsWith("blob:")) URL.revokeObjectURL(displayedPhotoURL);
+    displayedPhotoURL = url;
     adopt(result);
     readingControls.forEach(button => button.disabled = false);
   } catch {
     if (revision !== uploadRevision) return;
+    photo.src = displayedPhotoURL;
     nowEl.textContent = "Could not read the image";
     whyEl.textContent = "Try clear ink on light paper and check the local recognition service.";
+    readingControls.forEach(button => button.disabled = false);
   } finally {
     if (url !== displayedPhotoURL) URL.revokeObjectURL(url);
   }
