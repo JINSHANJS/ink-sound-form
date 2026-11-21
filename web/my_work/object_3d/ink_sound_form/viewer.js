@@ -1183,11 +1183,14 @@ function exportObj() {
   exporting = true;
   nowEl.textContent = "Sealing the 3D mesh";
   whyEl.textContent = "Joining intersections and checking for open edges.";
-  fetch("/solidify", {
+  const meshRequest = typeof window.requestPrintableMesh === "function"
+    ? window.requestPrintableMesh({chains: chains})
+    : fetch("/solidify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chains: chains }),
-  }).then(function (res) {
+  });
+  meshRequest.then(function (res) {
     if (!res.ok) {
       return res.json().then(function (data) {
         nowEl.textContent = "Could not create a printable mesh";
@@ -1206,8 +1209,8 @@ function exportObj() {
         + " mm. Preview ribbons export as round rods.";
     });
   }).catch(function () {
-    nowEl.textContent = "Mesh service unavailable";
-    whyEl.textContent = "Start the local recognition service and export again.";
+    nowEl.textContent = "Mesh export unavailable";
+    whyEl.textContent = "The mesh could not be completed. Try a shorter connected reading and export again.";
   }).then(function () {
     exporting = false;
   });
@@ -2338,9 +2341,14 @@ async function sendImage(blob) {
     photo.src = url;
     nowEl.textContent = "Recognising strokes";
     whyEl.textContent = "Reading the ink on your scroll.";
-    const res = await fetch("/recognize", { method: "POST", body: blob });
-    if (!res.ok) throw new Error("Recognition failed");
-    const result = await res.json();
+    let result;
+    if (typeof window.analyzeScrollImage === "function") {
+      result = await window.analyzeScrollImage(blob);
+    } else {
+      const res = await fetch("/recognize", { method: "POST", body: blob });
+      if (!res.ok) throw new Error("Recognition failed");
+      result = await res.json();
+    }
     if (revision !== uploadRevision) return;
     if (!result.notes?.length) throw new Error("No strokes");
     if (displayedPhotoURL.startsWith("blob:")) URL.revokeObjectURL(displayedPhotoURL);

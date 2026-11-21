@@ -1,0 +1,16 @@
+{
+  "pyodide": "0.27.7",
+  "source": "https://cdn.jsdelivr.net/pyodide/v0.27.7/full/",
+  "files": {
+    "pyodide.asm.js": "6b4c90de5b7172873f04f21884d0e9d2274e305fe32116558fe3e4fbe3618d51",
+    "ATTRIBUTION.md": "dcea9310f5ee350f2f0a38f7ce12ed873c9df156c20f29dbfe071a969f842dc5",
+    "pyodide-lock.json": "9c45b916001a750f4102fc287494f3eab215909c7535c626a20db80fd6333e2c",
+    "pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl": "43eab147a9355385a99eeac18fb577d4af2fe4bd0bbd23d3ba3ddb92e72c2815",
+    "pyodide.asm.wasm": "a50dd1843f805a0b7c45b61037ee0d7b26dfe85efe0e18ef95a34ad24e401f5f",
+    "opencv_python-4.10.0.84-cp312-cp312-pyodide_2024_0_wasm32.whl": "fae5731bfaa3590eefd92b70fb78a090882031f31905451230b2804e3d576800",
+    "numpy-2.0.2-cp312-cp312-pyodide_2024_0_wasm32.whl": "ebb61241d962b98b21597d7ce43b67668a6d5bab3acec4fbe958657320d7cd08",
+    "python_stdlib.zip": "16611534726e5d8ac2bd8f926410b2dcb8d6f49aa24913463533b457a2115c16",
+    "pyodide.js": "b4cb23a53aba19c221659b9fb40a2f18281d685691dc06647fb0afd0681baf98",
+    "PYODIDE-LICENSE": "1f256ecad192880510e84ad60474eab7589218784b9a50bc7ceee34c2b91f1d5"
+  }
+}

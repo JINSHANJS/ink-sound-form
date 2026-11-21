@@ -12,25 +12,35 @@ pinned: false
 
 [**Open the current artwork in your browser**](https://jinshanjs.github.io/ink-sound-form/)
 
-The browser preview includes the supplied scroll, reading and audio, particle and solid views, and the reading archive. Image processing, single-character reference paths, and printable OBJ export use the full runtime below.
+The published website includes the supplied scroll, custom image uploads, camera capture, all three reading methods, single-character standard/free paths, audio, particle and solid views, printable OBJ export, and the named reading archive with full-page PNG and SVG downloads.
 
-An interactive calligraphy artwork by JINSHANJS. Read a scroll, listen to the generated score, and fold the reading into a form that alternates between particles and a solid.
+Image analysis and closed-mesh generation run in a browser worker using the bundled Pyodide 0.27.7, NumPy 2.0.2, OpenCV 4.10.0.84 and Pillow 10.2.0. All required runtime files are included in this repository and served by GitHub Pages. A separate server, model selector, API key or local installation is not needed. The first upload or mesh export loads approximately 28 MB of runtime files; the interface stays responsive while processing runs in the worker. Uploaded photographs stay in the browser in this mode.
 
-The interface includes scroll reading, pointer reading, stroke tracing, single-character standard and free paths, camera and image upload, WAV and printable OBJ export, and a named browser archive with full-page PNG and SVG downloads. The standard path is an AI reference. Check the suggested character and the route against the source.
+The standard path is an image-based estimate. It is not a verified reconstruction of a calligrapher's historical writing order. Character labels may be entered or corrected manually.
 
-## Run the full artwork
+Camera access uses the browser's normal permission prompt and requires HTTPS or localhost. Downloads and archive storage follow the browser's permissions. OBJ export retains the one-shell, closed-edge and positive-volume checks rather than exporting a defective printable mesh. Archives store the most recent 20 readings in this browser, as designed.
 
-The server serves the webpage and its image recognition, single-character inference, and mesh generation on the same address. A running Docker host is required for a browser-only deployment. GitHub stores the source and checkpoint.
+## Run a local copy
+
+Serve the `web` directory with any static HTTP server, for example:
+
+```sh
+python3 -m http.server 8000 --directory web
+```
+
+Then open `/my_work/object_3d/ink_sound_form/字-音-像.html` on that server. A supported browser and the bundled files are sufficient; the Python image-processing packages do not need to be installed on the host. Run `python3 tools/bundle-browser-runtime.py` only when rebuilding or refreshing the pinned bundle. Package hashes are verified against the official Pyodide lockfile; `bundle-manifest.json` records the vendored files.
+
+## Optional server runtime
+
+The Python backend remains available for existing integrations:
 
 ```sh
 docker build -t ink-sound-form .
 docker run --rm -p 127.0.0.1:7860:7860 ink-sound-form
 ```
 
-Open [http://127.0.0.1:7860/](http://127.0.0.1:7860/) in a browser. For a public Docker host, set `INK_FORM_ORIGIN` to its exact external HTTPS origin. The app also recognises the external host supplied by a Hugging Face Docker Space. The health endpoint reports whether the reference checkpoint is present.
-
-Archives remain in the browser. Uploaded images are processed by the running server. Temporary files used during model inference are removed after the request.
+For a public Docker host, set `INK_FORM_ORIGIN` to its exact HTTPS origin. This backend is optional for the published browser artwork.
 
 ## Model attribution
 
-This project uses the phase-two checkpoint published by the [CalliRewrite authors](https://luoprojectpage.github.io/callirewrite/). The release asset includes the published checkpoint data and index with the required configuration. License notices and the inference source are retained under `vendor/`. The inference wrapper uses the checkpoint location configured by the host and skips an evaluation-only checkpoint, which is not used to generate paths.
+The repository retains the experimental phase-two checkpoint wrapper published by the [CalliRewrite authors](https://luoprojectpage.github.io/callirewrite/). The optional experimental release asset includes the published checkpoint data and index with the required configuration. The published browser paths use image-based ink continuity, rather than this checkpoint. License notices and the inference source are retained under `vendor/`. The inference wrapper uses the checkpoint location configured by the host and skips an evaluation-only checkpoint, which is not used to generate paths.

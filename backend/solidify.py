@@ -271,9 +271,9 @@ def _scale_mm(verts):
 
 def _obj(verts, faces):
     lines = [
-        "# 字-音-像",
-        "# 一个封闭实体。单位是毫米。最长一边 %.0f 毫米。" % PRINT_MM,
-        "o 字-音-像",
+        "# Ink Sound Form",
+        "# One closed mesh. Units: millimetres. Longest side: %.0f mm." % PRINT_MM,
+        "o Ink-Sound-Form",
     ]
     for x, y, z in verts:
         lines.append("v %.5f %.5f %.5f" % (x, y, z))

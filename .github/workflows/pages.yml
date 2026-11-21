@@ -1,4 +1,4 @@
-name: Publish browser preview
+name: Publish artwork
 on:
   push:
     branches: [main]
@@ -20,14 +20,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - name: Prepare static preview
+      - name: Verify complete browser bundle
         run: |
-          python3 - <<'PY'
+          python3 - <<'PYCODE'
           from pathlib import Path
-          page = Path("web/my_work/object_3d/ink_sound_form/字-音-像.html")
-          html = page.read_text()
-          page.write_text(html.replace("</body>", '<script src="pages-preview.js?v=2"></script>\n</body>'))
-          PY
+          import hashlib, json
+          page = Path("web/my_work/object_3d/ink_sound_form")
+          assert 'browser-processing.js?v=1' in (page / "字-音-像.html").read_text()
+          runtime = page / "browser-runtime"
+          for name, digest in json.loads((runtime / "bundle-manifest.json").read_text())["files"].items():
+              assert hashlib.sha256((runtime / name).read_bytes()).hexdigest() == digest, name
+          for name in ("extract.py", "solidify.py", "solidify_tables.py"):
+              assert (page / "browser-python" / name).read_bytes() == (Path("backend") / name).read_bytes(), name
+          PYCODE
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
