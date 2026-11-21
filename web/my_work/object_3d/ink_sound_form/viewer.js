@@ -1208,9 +1208,10 @@ function exportObj() {
         + (thin ? Number(thin).toFixed(1) : "3")
         + " mm. Preview ribbons export as round rods.";
     });
-  }).catch(function () {
+  }).catch(function (error) {
     nowEl.textContent = "Mesh export unavailable";
-    whyEl.textContent = "The mesh could not be completed. Try a shorter connected reading and export again.";
+    whyEl.textContent = typeof window.requestPrintableMesh === "function" && error.message
+      ? error.message : "The mesh could not be completed. Try a shorter connected reading and export again.";
   }).then(function () {
     exporting = false;
   });
@@ -2355,11 +2356,13 @@ async function sendImage(blob) {
     displayedPhotoURL = url;
     adopt(result);
     readingControls.forEach(button => button.disabled = false);
-  } catch {
+  } catch (error) {
     if (revision !== uploadRevision) return;
     photo.src = displayedPhotoURL;
     nowEl.textContent = "Could not read the image";
-    whyEl.textContent = "Try clear ink on light paper and check the local recognition service.";
+    whyEl.textContent = typeof window.analyzeScrollImage === "function"
+      ? (error.message || "Try a clear JPG or PNG of ink on light paper.")
+      : "Try clear ink on light paper and check the local recognition service.";
     readingControls.forEach(button => button.disabled = false);
   } finally {
     if (url !== displayedPhotoURL) URL.revokeObjectURL(url);

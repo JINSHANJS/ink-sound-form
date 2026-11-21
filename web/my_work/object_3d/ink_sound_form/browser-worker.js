@@ -28,8 +28,10 @@ import extract, solidify`);
 self.onmessage = event => {
   const {id, operation, payload} = event.data;
   queue = queue.then(async () => {
+    let ready = false;
     try {
       const python = await prepare(id);
+      ready = true;
       self.postMessage({id, status: operation === "image" ? "Recognising strokes in your browser…" : "Sealing and checking the mesh in your browser…"});
       let output;
       if (operation === "image") {
@@ -43,7 +45,9 @@ self.onmessage = event => {
       } else throw Error("Unknown browser operation.");
       self.postMessage({id, result: JSON.parse(output)});
     } catch (error) {
-      self.postMessage({id, error: operation === "image"
+      self.postMessage({id, error: !ready
+        ? "The browser engine could not load. Check your connection and try again."
+        : operation === "image"
         ? "The image could not be analysed. Use a clear JPG or PNG of ink on light paper and try again."
         : "The reading could not be sealed into one closed mesh. Try a shorter connected reading."});
       console.error("Browser artwork processing failed:", error);
