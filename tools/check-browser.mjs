@@ -37,6 +37,18 @@ try {
  await run('stop();phase="idle";exportBtn.click()');await until('!exporting&&nowEl.textContent==="Mesh downloaded"');
  const mesh=await run('(async()=>{const response=await window.requestPrintableMesh({chains:[[[0,0,0,.04],[.16,0,0,.04]]]});const text=await response.text();return {boundary:response.headers.get("X-Solid-Boundary"),components:response.headers.get("X-Solid-Components"),obj:text.includes("\\nf ")}})()');
  assert.deepEqual(mesh,{boundary:'0',components:'1',obj:true});
+ // Reanalyse light-on-dark ink using the browser processor.
+ const light=await run('(async()=>{const c=document.createElement("canvas");c.width=photo.naturalWidth;c.height=photo.naturalHeight;const ctx=c.getContext("2d");ctx.drawImage(photo,0,0);const pixels=ctx.getImageData(0,0,c.width,c.height);for(let i=0;i<pixels.data.length;i+=4){pixels.data[i]=255-pixels.data[i];pixels.data[i+1]=255-pixels.data[i+1];pixels.data[i+2]=255-pixels.data[i+2]}ctx.putImageData(pixels,0,0);const blob=await new Promise(r=>c.toBlob(r));return (await window.analyzeScrollImage(blob)).notes.length})()');
+ assert(light>0,'Light foreground was not recognised');
+ // Seed only this isolated test profile, then exercise the real retention and delete UI.
+ await run('(async()=>{window.archiveTestDB=await new Promise((resolve,reject)=>{const q=indexedDB.open("ink-sound-form-archive",1);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)});window.archiveTestRecords=()=>new Promise(resolve=>{const q=archiveTestDB.transaction("records").objectStore("records").getAll();q.onsuccess=()=>resolve(q.result)});const sample=(await archiveTestRecords())[0];if(!sample)throw Error("No generated archive");await new Promise((resolve,reject)=>{const tx=archiveTestDB.transaction("records","readwrite"),store=tx.objectStore("records");store.clear();for(let i=0;i<101;i++)store.put({...sample,id:"seed-"+String(i).padStart(3,"0"),created:i+1});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)})})()');
+ await run('solidBtn.click()');await until('(async()=>{const r=await archiveTestRecords();return r.length===100&&!r.some(x=>x.id==="seed-000"||x.id==="seed-001")})()');
+ await run('document.getElementById("archives").click()');await until('document.querySelectorAll(".archive-grid>button").length===20');
+ await run('document.querySelector(".archive-grid>button").click();document.querySelector(".archive-delete").click()');
+ await run('[...document.querySelectorAll(".archive-confirmation button")].find(b=>b.textContent==="Cancel").click()');assert.equal(await run('(async()=>(await archiveTestRecords()).length)()'),100);
+ await run('document.querySelector(".archive-delete").click();[...document.querySelectorAll(".archive-confirmation button")].find(b=>b.textContent==="Delete permanently").click()');
+ await until('(async()=>(await archiveTestRecords()).length===99)()');
+ await run('document.getElementById("archive-close").click()');await until('document.getElementById("archive-content").children.length===0');
  assert.equal(errors.length,0,JSON.stringify(errors));
- console.log('PASS: static upload, character opening, audio, 3D, actual OBJ export and closed mesh without a backend');
+ console.log('PASS: static upload, character opening, audio, 3D, actual OBJ export, closed mesh, white ink and 100-record deletion without a backend');
 } finally {clearTimeout(timeout);ws?.close();chrome.kill();server.kill()}

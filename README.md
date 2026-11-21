@@ -18,7 +18,7 @@ Image analysis and closed-mesh generation run in a browser worker using the bund
 
 The standard path is an image-based estimate. It is not a verified reconstruction of a calligrapher's historical writing order. Character labels may be entered or corrected manually.
 
-Camera access uses the browser's normal permission prompt and requires HTTPS or localhost. Downloads and archive storage follow the browser's permissions. OBJ export retains the one-shell, closed-edge and positive-volume checks rather than exporting a defective printable mesh. Archives store the most recent 20 readings in this browser, as designed.
+Camera access uses the browser's normal permission prompt and requires HTTPS or localhost. Downloads and archive storage follow the browser's permissions. OBJ export retains the one-shell, closed-edge and positive-volume checks rather than exporting a defective printable mesh. Archives store the most recent 100 readings in this browser. Open a record to delete it; the library displays 20 at a time.
 
 ## Run a local copy
 

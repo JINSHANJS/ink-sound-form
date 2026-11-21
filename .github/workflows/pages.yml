@@ -26,7 +26,7 @@ jobs:
           from pathlib import Path
           import hashlib, json
           page = Path("web/my_work/object_3d/ink_sound_form")
-          assert 'browser-processing.js?v=2' in (page / "字-音-像.html").read_text()
+          assert 'browser-processing.js?v=3' in (page / "字-音-像.html").read_text()
           runtime = page / "browser-runtime"
           for name, digest in json.loads((runtime / "bundle-manifest.json").read_text())["files"].items():
               assert hashlib.sha256((runtime / name).read_bytes()).hexdigest() == digest, name

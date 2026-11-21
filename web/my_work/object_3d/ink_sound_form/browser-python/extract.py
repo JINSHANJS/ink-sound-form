@@ -42,20 +42,32 @@ TRACE_SPECK = 8
 
 
 def ink_mask(rgb):
-    r, g, b = [rgb[:, :, i].astype(np.float32) for i in range(3)]
+    work = rgb.astype(np.float32)
+    original_lum = 0.2126 * work[:, :, 0] + 0.7152 * work[:, :, 1] + 0.0722 * work[:, :, 2]
+    if float(np.median(original_lum)) < 128:
+        work = 255 - work
+    r, g, b = [work[:, :, i] for i in range(3)]
     lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
     mx = np.maximum(np.maximum(r, g), b)
     mn = np.minimum(np.minimum(r, g), b)
     sat = (mx - mn) / np.maximum(mx, 1)
     seal = (sat > 0.42) & (r > g + 18) & (r > b + 8) & (lum > 50)
     gray = np.clip(lum, 0, 255).astype(np.uint8)
-    paper = cv2.morphologyEx(
-        gray,
-        cv2.MORPH_CLOSE,
-        cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (TRACE_PAPER, TRACE_PAPER)),
-    )
-    ratio = gray.astype(np.float32) / np.maximum(paper.astype(np.float32), 1.0)
-    ink = (ratio < TRACE_DARK) & ~seal
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (TRACE_PAPER, TRACE_PAPER))
+    paper = cv2.morphologyEx(gray, cv2.MORPH_CLOSE, kernel)
+    ink = gray.astype(np.float32) / np.maximum(paper.astype(np.float32), 1.0) < TRACE_DARK
+    # Low-luminance colours, such as blue on black, still have strong channel contrast.
+    chromatic = np.zeros(ink.shape, bool)
+    for channel in range(3):
+        value = np.clip(work[:, :, channel], 0, 255).astype(np.uint8)
+        background = cv2.morphologyEx(value, cv2.MORPH_CLOSE, kernel).astype(np.float32)
+        chromatic |= (value / np.maximum(background, 1) < .70) & (background - value >= 40)
+    if int(ink.sum()) < int(chromatic.sum()) * .5:
+        ink |= chromatic
+    # Retain red handwriting when it is the dominant ink, while filtering isolated red seals.
+    red_writing = seal & (r > 1.7 * np.maximum(g, 1)) & (r > 1.6 * np.maximum(b, 1))
+    if int((ink & red_writing).sum()) < max(1, int(ink.sum())) * .65:
+        ink &= ~seal
     u8 = cv2.morphologyEx((ink.astype(np.uint8)) * 255, cv2.MORPH_OPEN, np.ones((2, 2), np.uint8))
     count, labels, stats, _ = cv2.connectedComponentsWithStats(u8, connectivity=8)
     keep = np.zeros(ink.shape, bool)

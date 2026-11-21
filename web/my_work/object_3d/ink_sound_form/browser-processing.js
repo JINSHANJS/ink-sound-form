@@ -1,5 +1,5 @@
 (() => {
-  const workerURL = new URL("browser-worker.js?v=2", document.currentScript.src);
+  const workerURL = new URL("browser-worker.js?v=3", document.currentScript.src);
   let worker, nextId = 0;
   const pending = new Map();
   function process(operation, payload) {

@@ -12,7 +12,7 @@ async function prepare(id) {
     const directory = "/artwork/my_work/object_3d/ink_sound_form";
     python.FS.mkdirTree(directory);
     for (const name of ["extract.py", "solidify.py", "solidify_tables.py"]) {
-      const response = await fetch("browser-python/" + name);
+      const response = await fetch("browser-python/" + name + "?v=2");
       if (!response.ok) throw Error("A browser processing file is unavailable.");
       python.FS.writeFile(directory + "/" + name, await response.text());
     }
