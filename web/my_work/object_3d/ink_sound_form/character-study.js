@@ -116,9 +116,14 @@ async function analyzeCharacter(source) {
   studyStatus("Reading the ink paths… You can also use the full scroll with Read score, Follow pointer or Trace strokes.");
   try {
     const blob = await new Promise(resolve => source.toBlob(resolve));
-    const response = await fetch("/character",{method:"POST",body:blob});
-    if (!response.ok) throw Error("analysis");
-    const result = await response.json();
+    let result;
+    if (typeof window.analyzeCharacterCrop === "function") {
+      result = await window.analyzeCharacterCrop();
+    } else {
+      const response = await fetch("/character",{method:"POST",body:blob});
+      if (!response.ok) throw Error("analysis");
+      result = await response.json();
+    }
     if (revision !== characterStudy.request) return;
     photo.src = image; await photo.decode();
     if (revision !== characterStudy.request) return;

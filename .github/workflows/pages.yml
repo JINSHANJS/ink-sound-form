@@ -26,7 +26,7 @@ jobs:
           from pathlib import Path
           page = Path("web/my_work/object_3d/ink_sound_form/字-音-像.html")
           html = page.read_text()
-          page.write_text(html.replace("</body>", '<script src="pages-preview.js"></script>\n</body>'))
+          page.write_text(html.replace("</body>", '<script src="pages-preview.js?v=2"></script>\n</body>'))
           PY
       - uses: actions/upload-pages-artifact@v3
         with:
